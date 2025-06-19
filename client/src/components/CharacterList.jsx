@@ -1,25 +1,25 @@
 import {useEffect, useState} from "react";
-import {getAllGames, getImageUrl} from "../services/api";
+import {getAllCharacters, getImageUrl} from "../services/api";
 import {Link} from "react-router-dom";
 
-const GameList = () => {
-    const [games, setGames] = useState([]);
+const CharacterList = () => {
+    const [characters, setCharacters] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchGames = async () => {
+        const fetchCharacters = async () => {
             try {
-                const data = await getAllGames();
-                setGames(data);
+                const data = await getAllCharacters();
+                setCharacters(data);
                 setLoading(false);
             } catch (err) {
-                setError('Failed to fetch games');
+                setError('Failed to fetch characters');
                 setLoading(false);
             }
         };
 
-        fetchGames();
+        fetchCharacters();
     }, []);
 
     if (loading) return <div className="text-center mt-5">Loading...</div>;
@@ -27,33 +27,30 @@ const GameList = () => {
 
     return (
         <div className="container mt-4">
-            <h2>Games</h2>
+            <h2>Characters</h2>
             <div className="row">
-                {games.map(game => (
-                    <div key={game.id} className="col-md-4 mb-4">
+                {characters.map(character => (
+                    <div key={character.id} className="col-md-4 mb-4">
                         <div className="card">
-                            <img src={getImageUrl(game.imageUrl)}
+                            <img src={getImageUrl(character.imageUrl)}
                                  className="card-img-top"
-                                 alt={game.title}
+                                 alt={character.name}
                                  style={{height: '200px', objectFit: 'contain'}}
                                  onError={(e) => {
                                      e.target.onerror = null;
                                      e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Found'
                                  }}
                             />
-
                             <div className="card-body">
-                                <h5 className="card-title">{game.title}</h5>
-                                <p className="card-text">Game #{game.gameNumber}</p>
-                                <Link to={`/games/${game.id}`} className="btn btn-primary">View Details</Link>
+                                <h5 className="card-title">{character.name}</h5>
+                                <Link to={`/characters/${character.id}`} className="btn btn-primary">View Details</Link>
                             </div>
                         </div>
                     </div>
-                ))
-                }
+                ))}
             </div>
         </div>
     )
 }
 
-export default GameList;
+export default CharacterList;

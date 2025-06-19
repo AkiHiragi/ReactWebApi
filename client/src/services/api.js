@@ -20,6 +20,36 @@ export const getAllGames = async () => {
     }
 }
 
+export const getAllCharacters = async () => {
+    try {
+        const response = await api.get('/characters');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching characters:', error);
+        throw error;
+    }
+}
+
+export const getGameById = async (id) => {
+    try {
+        const response = await api.get(`/games/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching game`, error);
+        throw error;
+    }
+}
+
+export const getCharacterById = async (id) => {
+    try {
+        const response = await api.get(`/characters/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching character`, error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;
