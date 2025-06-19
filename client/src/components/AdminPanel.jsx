@@ -1,8 +1,18 @@
 import {useEffect, useState} from "react";
-import {addGame, deleteGame, getAllGames} from "../services/api";
+import {
+    addCharacter,
+    addGame,
+    deleteCharacter,
+    deleteGame,
+    getAllCharacters,
+    getAllGames,
+    getImageUrl
+} from "../services/api";
 
 const AdminPanel = () => {
+    const [activeTab, setActiveTab] = useState('games');
     const [games, setGames] = useState([]);
+    const [characters, setCharacters] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -13,8 +23,16 @@ const AdminPanel = () => {
         imageUrl: ''
     });
 
+    const [characterForm, setCharacterForm] = useState({
+        name: '',
+        description: '',
+        abilities: '',
+        imageUrl: ''
+    });
+
     useEffect(() => {
         fetchGames();
+        fetchCharacters();
     }, []);
 
     const fetchGames = async () => {
@@ -24,9 +42,18 @@ const AdminPanel = () => {
         } catch (err) {
             setError('Failed to fetch games');
         }
-    }
+    };
 
-    const handleSubmit = async (e) => {
+    const fetchCharacters = async () => {
+        try {
+            const data = await getAllCharacters();
+            setCharacters(data);
+        } catch (err) {
+            setError('Failed to fetch characters');
+        }
+    };
+
+    const handleGameSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
@@ -39,11 +66,7 @@ const AdminPanel = () => {
             });
 
             setSuccess('Game added successfully');
-            setGameForm({
-                title: '',
-                gameNumber: '',
-                imageUrl: ''
-            });
+            setGameForm({title: '', gameNumber: '', imageUrl: ''});
             fetchGames();
         } catch (err) {
             if (err.response?.status === 400) {
@@ -58,7 +81,34 @@ const AdminPanel = () => {
         }
     };
 
-    const handleDelete = async (id, title) => {
+    const handleCharacterSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            await addCharacter({
+                ...characterForm,
+                abilities: characterForm.abilities.split(',').map(a => a.trim()).filter(a => a)
+            });
+            setSuccess('Character added successfully');
+            setCharacterForm({name: '', description: '', abilities: '', imageUrl: ''});
+            fetchCharacters();
+        } catch (err) {
+            if (err.response?.status === 400) {
+                const validationErrors = err.response.data.errors;
+                const errorMessage = Object.values(validationErrors).flat();
+                setError(errorMessage.join(', '));
+            } else {
+                setError('Failed to add character');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteGame = async (id, title) => {
         if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
             try {
                 await deleteGame(id);
@@ -70,106 +120,274 @@ const AdminPanel = () => {
         }
     };
 
+    const handleDeleteCharacter = async (id, name) => {
+        if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
+            try {
+                await deleteCharacter(id);
+                setSuccess('Character deleted successfully!');
+                fetchCharacters();
+            } catch (err) {
+                setError('Failed to delete character');
+            }
+        }
+    };
+
     return (
         <div className="container mt-4">
-            <h2>Admin Panel - Games</h2>
+            <h2>Admin Panel</h2>
+
+            {/* Вкладки */}
+            <ul className="nav nav-tabs mb-4">
+                <li className="nav-item">
+                    <button
+                        className={`nav-link ${activeTab === 'games' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('games')}
+                    >
+                        Games
+                    </button>
+                </li>
+                <li className="nav-item">
+                    <button
+                        className={`nav-link ${activeTab === 'characters' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('characters')}
+                    >
+                        Characters
+                    </button>
+                </li>
+            </ul>
 
             {/* Сообщения */}
             {error && <div className="alert alert-danger">{error}</div>}
             {success && <div className="alert alert-success">{success}</div>}
 
-            {/* Форма добавления */}
-            <div className="card mb-4">
-                <div className="card-header">
-                    <h4>Add New Game</h4>
-                </div>
-                <div className="card-body">
-                    <form onSubmit={handleSubmit}>
-                        <div className="row">
-                            <div className="col-md-4">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Game Title"
-                                    value={gameForm.title}
-                                    onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    className="form-control"
-                                    placeholder="Game Number"
-                                    value={gameForm.gameNumber}
-                                    onChange={(e) => setGameForm({...gameForm, gameNumber: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="col-md-4">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Image URL (e.g., Images/th08.jpg)"
-                                    value={gameForm.imageUrl}
-                                    onChange={(e) => setGameForm({...gameForm, imageUrl: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Adding...' : 'Add Game'}
-                                </button>
+            {/* Вкладка игр */}
+            {activeTab === 'games' && (
+                <>
+                    <div className="card mb-4">
+                        <div className="card-header">
+                            <h4>Add New Game</h4>
+                        </div>
+                        <div className="card-body">
+                            <form onSubmit={handleGameSubmit}>
+                                <div className="row">
+                                    <div className="col-md-4">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Game Title"
+                                            value={gameForm.title}
+                                            onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            className="form-control"
+                                            placeholder="Game Number"
+                                            value={gameForm.gameNumber}
+                                            onChange={(e) => setGameForm({...gameForm, gameNumber: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Image URL"
+                                            value={gameForm.imageUrl}
+                                            onChange={(e) => setGameForm({...gameForm, imageUrl: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Adding...' : 'Add Game'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <h4>Existing Games</h4>
+                        </div>
+                        <div className="card-body">
+                            <div className="table-responsive">
+                                <table className="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Number</th>
+                                        <th>Title</th>
+                                        <th>Image</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {games.map(game => (
+                                        <tr key={game.id}>
+                                            <td>{game.gameNumber}</td>
+                                            <td>{game.title}</td>
+                                            <td>
+                                                <img
+                                                    src={getImageUrl(game.imageUrl)}
+                                                    alt={game.title}
+                                                    style={{width: '50px', height: '50px', objectFit: 'cover'}}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://via.placeholder.com/50x50?text=No+Image'
+                                                    }}
+                                                />
+                                            </td>
+
+                                            <td>
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleDeleteGame(game.id, game.title)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
-
-            {/* Список игр */}
-            <div className="card">
-                <div className="card-header">
-                    <h4>Existing Games</h4>
-                </div>
-                <div className="card-body">
-                    <div className="table-responsive">
-                        <table className="table">
-                            <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Number</th>
-                                <th>Image</th>
-                                <th>Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {games.map(game => (
-                                <tr key={game.id}>
-                                    <td>{game.id}</td>
-                                    <td>{game.title}</td>
-                                    <td>{game.gameNumber}</td>
-                                    <td>{game.imageUrl}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() => handleDelete(game.id, game.title)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
                     </div>
-                </div>
-            </div>
+                </>
+            )}
+
+            {/* Вкладка персонажей */}
+            {activeTab === 'characters' && (
+                <>
+                    <div className="card mb-4">
+                        <div className="card-header">
+                            <h4>Add New Character</h4>
+                        </div>
+                        <div className="card-body">
+                            <form onSubmit={handleCharacterSubmit}>
+                                <div className="row mb-3">
+                                    <div className="col-md-3">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Character Name"
+                                            value={characterForm.name}
+                                            onChange={(e) => setCharacterForm({...characterForm, name: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-3">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Description"
+                                            value={characterForm.description}
+                                            onChange={(e) => setCharacterForm({
+                                                ...characterForm,
+                                                description: e.target.value
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="col-md-4">
+                                        <textarea
+                                            className="form-control"
+                                            placeholder="Abilities (comma separated)"
+                                            value={characterForm.abilities}
+                                            onChange={(e) => setCharacterForm({
+                                                ...characterForm,
+                                                abilities: e.target.value
+                                            })}
+                                            rows="1"
+                                        />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Image URL"
+                                            value={characterForm.imageUrl}
+                                            onChange={(e) => setCharacterForm({
+                                                ...characterForm,
+                                                imageUrl: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Adding...' : 'Add Character'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <h4>Existing Characters</h4>
+                        </div>
+                        <div className="card-body">
+                            <div className="table-responsive">
+                                <table className="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Abilities</th>
+                                        <th>Image</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {characters.map(character => (
+                                        <tr key={character.id}>
+                                            <td>{character.name}</td>
+                                            <td>{character.description}</td>
+                                            <td>{character.abilities?.join(', ') || 'None'}</td>
+                                            <td>
+                                                <img
+                                                    src={getImageUrl(character.imageUrl)}
+                                                    alt={character.name}
+                                                    style={{width: '50px', height: '50px', objectFit: 'cover'}}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'https://via.placeholder.com/50x50?text=No+Image'
+                                                    }}
+                                                />
+                                            </td>
+                                            <td>
+                                                <button
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleDeleteCharacter(character.id, character.name)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

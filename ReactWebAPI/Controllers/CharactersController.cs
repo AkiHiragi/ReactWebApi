@@ -56,7 +56,6 @@ public class CharactersController : ControllerBase
             return BadRequest(ModelState);
 
         var character = _mapper.Map<Character>(characterDto);
-        character.Abilities   = [];
         character.Games       = [];
         character.MusicThemes = [];
 
