@@ -40,9 +40,21 @@ public class CharactersController : ControllerBase
         return Ok(characterDto);
     }
 
+    [HttpGet("WithGames")]
+    public async Task<ActionResult<IEnumerable<CharacterDto>>> GetAllCharactersWithGames()
+    {
+        var characters    = await _characterRepository.GetAllWithGamesAsync();
+        var charactersDto = _mapper.Map<IEnumerable<CharacterDto>>(characters);
+
+        return Ok(charactersDto);
+    }
+
     [HttpPost]
     public async Task<ActionResult<CharacterBasicDto>> AddCharacter(CharacterBasicDto characterDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var character = _mapper.Map<Character>(characterDto);
         character.Abilities   = [];
         character.Games       = [];
@@ -57,6 +69,9 @@ public class CharactersController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateCharacter(int id, CharacterDto characterDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         if (id != characterDto.Id) return BadRequest();
 
         var character = await _characterRepository.GetByIdAsync(id);

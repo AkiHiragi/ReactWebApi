@@ -54,6 +54,9 @@ public class GamesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GameBasicDto>> AddGame(GameBasicDto gameDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var game = _mapper.Map<Game>(gameDto);
         game.Characters  = [];
         game.MusicThemes = [];
@@ -77,6 +80,9 @@ public class GamesController : ControllerBase
     [HttpPost("{gameId:int}/Characters/{characterId:int}")]
     public async Task<IActionResult> AddCharacterToGame(int gameId, int characterId)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         try
         {
             await _gameRepository.AddCharacterToGameAsync(gameId, characterId);
@@ -91,6 +97,9 @@ public class GamesController : ControllerBase
     [HttpPost("{gameId:int}/MusicThemes")]
     public async Task<ActionResult<MusicThemeDto>> AddMusicThemeToGame(int gameId, MusicThemeDto musicThemeDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null) return NotFound("Game not found");
 
@@ -109,6 +118,9 @@ public class GamesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> ChangeGame(int id, GameBasicDto gameDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         if (id != gameDto.Id) return BadRequest();
 
         var game = await _gameRepository.GetByIdAsync(id);

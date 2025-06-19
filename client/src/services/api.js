@@ -50,6 +50,16 @@ export const getCharacterById = async (id) => {
     }
 }
 
+export const getAllCharactersWithGames = async () => {
+    try {
+        const response = await api.get('/characters/WithGames');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching characters with games:', error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;

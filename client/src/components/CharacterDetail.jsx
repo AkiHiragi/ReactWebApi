@@ -54,12 +54,14 @@ const CharacterDetail = () => {
                     <div className="row">
                         {character.games.map(game => (
                             <div key={game.id} className="col-md-6 mb-2">
-                                <div className="card">
-                                    <div className="card-body p-2">
-                                        <h6 className="card-title mb-0">{game.title}</h6>
-                                        <small className="text-muted">Game #{game.gameNumber}</small>
+                                <Link to={`/games/${game.id}`} className="text-decoration-none">
+                                    <div className="card game-card">
+                                        <div className="card-body p-2">
+                                            <h6 className="card-title mb-0 text-primary">{game.title}</h6>
+                                            <small className="text-muted">Game #{game.gameNumber}</small>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             </div>
                         ))}
                     </div>

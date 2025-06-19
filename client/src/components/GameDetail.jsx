@@ -47,11 +47,13 @@ const GameDetail = () => {
                     <div className="row">
                         {game.characters.map(character => (
                             <div key={character.id} className="col-md-6 mb-2">
-                                <div className="card">
-                                    <div className="card-body p-2">
-                                        <h6 className="card-title mb-0">{character.name}</h6>
+                                <Link to={`/characters/${character.id}`} className="text-decoration-none">
+                                    <div className="card character-card">
+                                        <div className="card-body p-2">
+                                            <h6 className="card-title mb-0 text-primary">{character.name}</h6>
+                                        </div>
                                     </div>
-                                </div>
+                                </Link>
                             </div>
                         ))}
                     </div>

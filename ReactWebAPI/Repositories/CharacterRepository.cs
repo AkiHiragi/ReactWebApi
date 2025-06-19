@@ -17,4 +17,11 @@ public class CharacterRepository : Repository<Character>, ICharacterRepository
                              .Include(c => c.MusicThemes)
                              .FirstOrDefaultAsync(c => c.Id == id);
     }
+
+    public async Task<IEnumerable<Character>> GetAllWithGamesAsync()
+    {
+        return await _context.Characters
+                             .Include(c => c.Games)
+                             .ToListAsync();
+    }
 }

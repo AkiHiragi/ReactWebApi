@@ -4,5 +4,6 @@ namespace ReactWebAPI.Repositories;
 
 public interface ICharacterRepository : IRepository<Character>
 {
-    Task<Character?> GetCharacterWithDetailsAsync(int id);
+    Task<Character?>             GetCharacterWithDetailsAsync(int id);
+    Task<IEnumerable<Character>> GetAllWithGamesAsync();
 }

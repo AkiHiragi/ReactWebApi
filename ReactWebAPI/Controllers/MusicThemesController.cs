@@ -65,6 +65,9 @@ public class MusicThemesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MusicThemeDto>> AddMusicTheme(MusicThemeDto musicThemeDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var musicTheme      = _mapper.Map<MusicTheme>(musicThemeDto);
         var addedMusicTheme = await _repository.AddAsync(musicTheme);
         var resultDto       = _mapper.Map<MusicThemeDto>(addedMusicTheme);
@@ -75,6 +78,9 @@ public class MusicThemesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMusicTheme(int id, MusicThemeDto musicThemeDto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         if (id != musicThemeDto.Id) return BadRequest();
 
         var musicTheme = await _repository.GetByIdAsync(id);
