@@ -60,6 +60,26 @@ export const getAllCharactersWithGames = async () => {
     }
 }
 
+export const addGame = async (gameData) => {
+    try {
+        const response = await api.post('/games', gameData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding game:', error);
+        throw error;
+    }
+}
+
+export const deleteGame = async (id) => {
+    try {
+        const response = await api.delete(`/games/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error deleting game`, error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;
