@@ -10,6 +10,14 @@ public class GameRepository : Repository<Game>, IGameRepository
     {
     }
 
+    public async Task<IEnumerable<Game>> GetAllWithDetailsAsync()
+    {
+        return await _context.Games
+                             .Include(g => g.Characters)
+                             .Include(g => g.MusicThemes)
+                             .ToListAsync();
+    }
+
     public async Task<Game?> GetGameWithDetailsAsync(int id)
     {
         return await _context.Games

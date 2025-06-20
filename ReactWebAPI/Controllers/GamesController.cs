@@ -42,13 +42,13 @@ public class GamesController : ControllerBase
         return Ok(gameDto);
     }
 
-    [HttpGet("Characters")]
-    public async Task<ActionResult<IEnumerable<CharacterBasicDto>>> GetAllCharacters()
+    [HttpGet("WithCharacters")]
+    public async Task<ActionResult<IEnumerable<GameDto>>> GetAllGamesWithCharacters()
     {
-        var characters    = await _characterRepository.GetAllAsync();
-        var charactersDto = _mapper.Map<IEnumerable<CharacterBasicDto>>(characters);
+        var games    = await _gameRepository.GetAllWithDetailsAsync();
+        var gamesDto = _mapper.Map<IEnumerable<GameDto>>(games);
 
-        return Ok(charactersDto);
+        return Ok(gamesDto);
     }
 
     [HttpPost]

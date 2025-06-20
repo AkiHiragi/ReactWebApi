@@ -100,6 +100,25 @@ export const deleteCharacter = async (id) => {
     }
 }
 
+export const addCharacterToGame = async (gameId, characterId) => {
+    try {
+        await api.post(`/games/${gameId}/characters/${characterId}`);
+    } catch (error) {
+        console.error(`Error adding character to game`, error);
+        throw error;
+    }
+}
+
+export const getAllGamesWithCharacters = async () => {
+    try {
+        const response = await api.get('/games/WithCharacters');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching games with characters:', error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;
