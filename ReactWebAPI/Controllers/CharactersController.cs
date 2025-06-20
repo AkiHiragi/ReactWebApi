@@ -66,7 +66,7 @@ public class CharactersController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateCharacter(int id, CharacterDto characterDto)
+    public async Task<IActionResult> UpdateCharacter(int id, CharacterBasicDto characterDto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);

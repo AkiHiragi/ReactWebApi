@@ -119,6 +119,26 @@ export const getAllGamesWithCharacters = async () => {
     }
 }
 
+export const updateGame = async (id, gameData) => {
+    try {
+        const response = await api.put(`/games/${id}`, gameData);
+        return response.data;
+    } catch (error) {
+        console.error(`Error updating game:`, error);
+        throw error;
+    }
+}
+
+export const updateCharacter = async (id, characterData) => {
+    try {
+        const response = await api.put(`/characters/${id}`, characterData);
+        return response.data;
+    } catch (error) {
+        console.error(`Error updating character:`, error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;

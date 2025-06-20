@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {addGame, deleteGame, getImageUrl} from "../../services/api";
+import {addGame, deleteGame, getImageUrl, updateGame} from "../../services/api";
 
 const GameManagement = ({games, onDataChange, onMessage}) => {
     const [loading, setLoading] = useState(false);
@@ -9,6 +9,7 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
         imageUrl: ''
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const [editingGame, setEditingGame] = useState(null);
 
     const filteredGames = games.filter(game =>
         game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,6 +54,32 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
             }
         }
     };
+
+    const handleUpdateGame = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        onMessage(null, null);
+
+        try {
+            await updateGame(editingGame.id, {
+                ...editingGame,
+                gameNumber: parseFloat(editingGame.gameNumber)
+            });
+            onMessage(null, 'Game updated successfully');
+            setEditingGame(null);
+            onDataChange();
+        } catch (err) {
+            if (err.response?.status === 400) {
+                const validationErrors = err.response.data.errors;
+                const errorMessage = Object.values(validationErrors).flat();
+                onMessage(errorMessage.join(', '), null);
+            } else {
+                onMessage('Failed to update game', null);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <>
@@ -144,6 +171,12 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                                     </td>
                                     <td>
                                         <button
+                                            className="btn btn-warning btn-sm me-2"
+                                            onClick={() => setEditingGame(game)}
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
                                             className="btn btn-danger btn-sm"
                                             onClick={() => handleDeleteGame(game.id, game.title)}
                                         >
@@ -157,8 +190,80 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                     </div>
                 </div>
             </div>
+
+            {/* Модальное окно редактирования */}
+            {editingGame && (
+                <div className="modal show d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Edit Game</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setEditingGame(null)}
+                                ></button>
+                            </div>
+                            <form onSubmit={handleUpdateGame}>
+                                <div className="modal-body">
+                                    <div className="mb-3">
+                                        <label className="form-label">Game Title</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={editingGame.title}
+                                            onChange={(e) => setEditingGame({...editingGame, title: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Game Number</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            className="form-control"
+                                            value={editingGame.gameNumber}
+                                            onChange={(e) => setEditingGame({
+                                                ...editingGame,
+                                                gameNumber: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Image URL</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={editingGame.imageUrl}
+                                            onChange={(e) => setEditingGame({...editingGame, imageUrl: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() => setEditingGame(null)}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Updating' : 'Update Game'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
-    );
-};
+    )
+}
 
 export default GameManagement;

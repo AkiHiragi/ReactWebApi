@@ -23,7 +23,7 @@ public class GameBasicDtoValidator : AbstractValidator<GameBasicDto>
 
     private bool BeValidImagePath(string imageUrl)
     {
-        return (imageUrl.StartsWith("Images/") &&
-                imageUrl.EndsWith(".jpg")) || imageUrl.EndsWith(".png") || imageUrl.EndsWith(".jpeg");
+        return imageUrl.StartsWith("Images/") &&
+               (imageUrl.EndsWith(".jpg") || imageUrl.EndsWith(".png") || imageUrl.EndsWith(".jpeg"));
     }
 }
