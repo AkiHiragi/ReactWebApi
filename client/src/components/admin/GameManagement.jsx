@@ -1,5 +1,7 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {addGame, deleteGame, getImageUrl, updateGame} from "../../services/api";
+import {useImageUpload} from "../../hooks/useImageUpload";
+import ImageUpload from "../common/ImageUpload";
 
 const GameManagement = ({games, onDataChange, onMessage}) => {
     const [loading, setLoading] = useState(false);
@@ -10,6 +12,9 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [editingGame, setEditingGame] = useState(null);
+    
+    const addImage = useImageUpload();
+    const editImage = useImageUpload();
 
     const filteredGames = games.filter(game =>
         game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -19,17 +24,23 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
     const handleGameSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        onMessage(null, null); // Очищаем сообщения
+        onMessage(null, null);
 
         try {
+            let imageUrl = gameForm.imageUrl;
+            const uploadedImageUrl = await addImage.uploadImageFile();
+            if (uploadedImageUrl) imageUrl = uploadedImageUrl;
+
             await addGame({
                 ...gameForm,
+                imageUrl,
                 gameNumber: parseFloat(gameForm.gameNumber)
             });
 
             onMessage(null, 'Game added successfully');
             setGameForm({title: '', gameNumber: '', imageUrl: ''});
-            onDataChange(); // Обновляем данные в родителе
+            addImage.resetImage();
+            onDataChange();
         } catch (err) {
             if (err.response?.status === 400) {
                 const validationErrors = err.response.data.errors;
@@ -61,12 +72,18 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
         onMessage(null, null);
 
         try {
+            let imageUrl = editingGame.imageUrl;
+            const uploadedImageUrl = await editImage.uploadImageFile();
+            if (uploadedImageUrl) imageUrl = uploadedImageUrl;
+
             await updateGame(editingGame.id, {
                 ...editingGame,
+                imageUrl,
                 gameNumber: parseFloat(editingGame.gameNumber)
             });
             onMessage(null, 'Game updated successfully');
             setEditingGame(null);
+            editImage.resetImage();
             onDataChange();
         } catch (err) {
             if (err.response?.status === 400) {
@@ -79,7 +96,7 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     return (
         <>
@@ -100,45 +117,48 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                 <div className="card-body">
                     <form onSubmit={handleGameSubmit}>
                         <div className="row">
-                            <div className="col-md-4">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Game Title"
-                                    value={gameForm.title}
-                                    onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
-                                    required
-                                />
+                            <div className="col-md-3">
+                                <div style={{marginTop: '32px'}}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Game Title"
+                                        value={gameForm.title}
+                                        onChange={(e) => setGameForm({...gameForm, title: e.target.value})}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="col-md-2">
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    className="form-control"
-                                    placeholder="Game Number"
-                                    value={gameForm.gameNumber}
-                                    onChange={(e) => setGameForm({...gameForm, gameNumber: e.target.value})}
-                                    required
-                                />
+                                <div style={{marginTop: '32px'}}>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        className="form-control"
+                                        placeholder="Game Number"
+                                        value={gameForm.gameNumber}
+                                        onChange={(e) => setGameForm({...gameForm, gameNumber: e.target.value})}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="col-md-4">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Image URL"
-                                    value={gameForm.imageUrl}
-                                    onChange={(e) => setGameForm({...gameForm, imageUrl: e.target.value})}
-                                    required
+                                <ImageUpload
+                                    label="Game Image"
+                                    imagePreview={addImage.imagePreview}
+                                    onImageChange={addImage.handleImageChange}
                                 />
                             </div>
-                            <div className="col-md-2">
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary"
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Adding...' : 'Add Game'}
-                                </button>
+                            <div className="col-md-3">
+                                <div style={{marginTop: '32px'}}>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary w-100"
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Adding...' : 'Add Game'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -154,21 +174,27 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                         <table className="table">
                             <thead>
                             <tr>
+                                <th>Image</th>
                                 <th>Number</th>
                                 <th>Title</th>
-                                <th>Image</th>
                                 <th>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             {filteredGames.map(game => (
                                 <tr key={game.id}>
+                                    <td>
+                                        <img
+                                            src={getImageUrl(game.imageUrl)}
+                                            alt={game.title}
+                                            style={{width: '80px', height: '80px', objectFit: 'cover'}}
+                                            onError={(e) => {
+                                                e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
+                                            }}
+                                        />
+                                    </td>
                                     <td>{game.gameNumber}</td>
                                     <td>{game.title}</td>
-                                    <td>
-                                        <img src={getImageUrl(game.imageUrl)} alt={game.title}
-                                             style={{height: '50px'}}/>
-                                    </td>
                                     <td>
                                         <button
                                             className="btn btn-warning btn-sm me-2"
@@ -201,7 +227,10 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() => setEditingGame(null)}
+                                    onClick={() => {
+                                        setEditingGame(null);
+                                        editImage.resetImage();
+                                    }}
                                 ></button>
                             </div>
                             <form onSubmit={handleUpdateGame}>
@@ -231,31 +260,33 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                                         />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label">Image URL</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={editingGame.imageUrl}
-                                            onChange={(e) => setEditingGame({...editingGame, imageUrl: e.target.value})}
-                                            required
+                                        <ImageUpload
+                                            label="Game Image"
+                                            imagePreview={editImage.imagePreview}
+                                            onImageChange={editImage.handleImageChange}
+                                            currentImage={getImageUrl(editingGame.imageUrl)}
+                                            showCurrent={true}
                                         />
                                     </div>
-                                    <div className="modal-footer">
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary"
-                                            onClick={() => setEditingGame(null)}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary"
-                                            disabled={loading}
-                                        >
-                                            {loading ? 'Updating' : 'Update Game'}
-                                        </button>
-                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => {
+                                            setEditingGame(null);
+                                            editImage.resetImage();
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Updating...' : 'Update Game'}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -263,7 +294,7 @@ const GameManagement = ({games, onDataChange, onMessage}) => {
                 </div>
             )}
         </>
-    )
-}
+    );
+};
 
 export default GameManagement;

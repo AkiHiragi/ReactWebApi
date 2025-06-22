@@ -1,5 +1,7 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {addCharacter, deleteCharacter, getImageUrl, updateCharacter} from "../../services/api";
+import {useImageUpload} from "../../hooks/useImageUpload";
+import ImageUpload from "../common/ImageUpload";
 
 const CharacterManagement = ({characters, onDataChange, onMessage}) => {
     const [loading, setLoading] = useState(false);
@@ -11,6 +13,9 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
     });
     const [searchQuery, setSearchQuery] = useState('');
     const [editingCharacter, setEditingCharacter] = useState(null);
+    
+    const addImage = useImageUpload();
+    const editImage = useImageUpload();
 
     const filteredCharacters = characters.filter(character =>
         character.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -26,12 +31,19 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
         onMessage(null, null);
 
         try {
+            let imageUrl = characterForm.imageUrl;
+            const uploadedImageUrl = await addImage.uploadImageFile();
+            if (uploadedImageUrl) imageUrl = uploadedImageUrl;
+
             await addCharacter({
                 ...characterForm,
+                imageUrl,
                 abilities: characterForm.abilities.split(',').map(a => a.trim()).filter(a => a)
             });
+
             onMessage(null, 'Character added successfully');
             setCharacterForm({name: '', description: '', abilities: '', imageUrl: ''});
+            addImage.resetImage();
             onDataChange();
         } catch (err) {
             if (err.response?.status === 400) {
@@ -64,14 +76,20 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
         onMessage(null, null);
 
         try {
+            let imageUrl = editingCharacter.imageUrl;
+            const uploadedImageUrl = await editImage.uploadImageFile();
+            if (uploadedImageUrl) imageUrl = uploadedImageUrl;
+
             await updateCharacter(editingCharacter.id, {
                 ...editingCharacter,
+                imageUrl,
                 abilities: Array.isArray(editingCharacter.abilities)
                     ? editingCharacter.abilities
                     : editingCharacter.abilities.split(',').map(a => a.trim()).filter(a => a)
             });
             onMessage(null, 'Character updated successfully');
             setEditingCharacter(null);
+            editImage.resetImage();
             onDataChange();
         } catch (err) {
             if (err.response?.status === 400) {
@@ -85,7 +103,6 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
             setLoading(false);
         }
     };
-
 
     return (
         <>
@@ -106,45 +123,53 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                 <div className="card-body">
                     <form onSubmit={handleCharacterSubmit}>
                         <div className="row">
-                            <div className="col-md-3">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Character Name"
-                                    value={characterForm.name}
-                                    onChange={(e) => setCharacterForm({...characterForm, name: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="col-md-3">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Description"
-                                    value={characterForm.description}
-                                    onChange={(e) => setCharacterForm({...characterForm, description: e.target.value})}
-                                />
+                            <div className="col-md-4">
+                                <div style={{marginTop: '32px'}}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Character Name"
+                                        value={characterForm.name}
+                                        onChange={(e) => setCharacterForm({...characterForm, name: e.target.value})}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <div className="col-md-4">
+                                <div style={{marginTop: '32px'}}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Description"
+                                        value={characterForm.description}
+                                        onChange={(e) => setCharacterForm({
+                                            ...characterForm,
+                                            description: e.target.value
+                                        })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-md-4">
+                                <ImageUpload
+                                    label="Character Image"
+                                    imagePreview={addImage.imagePreview}
+                                    onImageChange={addImage.handleImageChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="row mt-2">
+                            <div className="col-md-12">
                                 <textarea
                                     className="form-control"
                                     placeholder="Abilities (comma separated)"
                                     value={characterForm.abilities}
                                     onChange={(e) => setCharacterForm({...characterForm, abilities: e.target.value})}
-                                    rows="1"
-                                />
-                            </div>
-                            <div className="col-md-2">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Image URL"
-                                    value={characterForm.imageUrl}
-                                    onChange={(e) => setCharacterForm({...characterForm, imageUrl: e.target.value})}
-                                    required
+                                    rows="2"
                                 />
                             </div>
                         </div>
+
                         <div className="row mt-2">
                             <div className="col-md-12 d-flex justify-content-end">
                                 <button
@@ -169,23 +194,36 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                         <table className="table">
                             <thead>
                             <tr>
+                                <th>Image</th>
                                 <th>Name</th>
                                 <th>Description</th>
-                                <th>Abilities</th>
-                                <th>Image</th>
                                 <th>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             {filteredCharacters.map(character => (
                                 <tr key={character.id}>
-                                    <td>{character.name}</td>
-                                    <td>{character.description}</td>
-                                    <td>{Array.isArray(character.abilities) ? character.abilities.join(', ') : character.abilities}</td>
                                     <td>
-                                        <img src={getImageUrl(character.imageUrl)} alt={character.name}
-                                             style={{height: '50px'}}/>
+                                        <img
+                                            src={getImageUrl(character.imageUrl)}
+                                            alt={character.name}
+                                            style={{width: '80px', height: '80px', objectFit: 'cover'}}
+                                            onError={(e) => {
+                                                e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
+                                            }}
+                                        />
                                     </td>
+                                    <td>
+                                        <strong>{character.name}</strong>
+                                        <br/>
+                                        <small className="text-muted">
+                                            {Array.isArray(character.abilities) 
+                                                ? character.abilities.slice(0, 2).join(', ') + (character.abilities.length > 2 ? '...' : '')
+                                                : character.abilities
+                                            }
+                                        </small>
+                                    </td>
+                                    <td>{character.description}</td>
                                     <td>
                                         <button
                                             className="btn btn-warning btn-sm me-2"
@@ -223,7 +261,10 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() => setEditingCharacter(null)}
+                                    onClick={() => {
+                                        setEditingCharacter(null);
+                                        editImage.resetImage();
+                                    }}
                                 ></button>
                             </div>
                             <form onSubmit={handleUpdateCharacter}>
@@ -266,16 +307,12 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                                         />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label">Image URL</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={editingCharacter.imageUrl}
-                                            onChange={(e) => setEditingCharacter({
-                                                ...editingCharacter,
-                                                imageUrl: e.target.value
-                                            })}
-                                            required
+                                        <ImageUpload
+                                            label="Character Image"
+                                            imagePreview={editImage.imagePreview}
+                                            onImageChange={editImage.handleImageChange}
+                                            currentImage={getImageUrl(editingCharacter.imageUrl)}
+                                            showCurrent={true}
                                         />
                                     </div>
                                 </div>
@@ -283,7 +320,10 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                                     <button
                                         type="button"
                                         className="btn btn-secondary"
-                                        onClick={() => setEditingCharacter(null)}
+                                        onClick={() => {
+                                            setEditingCharacter(null);
+                                            editImage.resetImage();
+                                        }}
                                     >
                                         Cancel
                                     </button>
@@ -300,7 +340,6 @@ const CharacterManagement = ({characters, onDataChange, onMessage}) => {
                     </div>
                 </div>
             )}
-
         </>
     );
 };

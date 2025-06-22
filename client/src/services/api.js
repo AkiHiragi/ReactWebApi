@@ -139,6 +139,23 @@ export const updateCharacter = async (id, characterData) => {
     }
 }
 
+export const uploadImage = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await api.post('/fileupload/image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+    }
+}
+
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
 
 export default api;
