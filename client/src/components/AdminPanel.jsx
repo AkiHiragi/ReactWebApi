@@ -1,14 +1,16 @@
 import {useEffect, useState} from "react";
-import {getAllCharacters, getAllGames, getAllGamesWithCharacters} from "../services/api";
+import {getAllCharacters, getAllGames, getAllGamesWithCharacters, getAllMusicThemes} from "../services/api";
 import AlertMessages from "./admin/AlertMessages";
 import GameManagement from "./admin/GameManagement";
 import CharacterManagement from "./admin/CharacterManagement";
 import RelationshipManagement from "./admin/RelationshipManagement";
+import MusicThemeManagement from "./admin/MusicThemeManagement";
 
 const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('games');
     const [games, setGames] = useState([]);
     const [characters, setCharacters] = useState([]);
+    const [musicThemes, setMusicThemes] = useState([]);
     const [gamesWithCharacters, setGamesWithCharacters] = useState([]);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -24,7 +26,8 @@ const AdminPanel = () => {
             await Promise.all([
                 fetchGames(),
                 fetchCharacters(),
-                fetchGamesWithCharacters()
+                fetchGamesWithCharacters(),
+                fetchMusicThemes()
             ]);
         } finally {
             setLoading(false);
@@ -57,6 +60,15 @@ const AdminPanel = () => {
             setError('Failed to fetch games with characters');
         }
     };
+
+    const fetchMusicThemes = async () => {
+        try {
+            const data = await getAllMusicThemes();
+            setMusicThemes(data);
+        } catch (err) {
+            setError('Failed to fetch music themes');
+        }
+    }
 
     const handleMessage = (errorMsg, successMsg) => {
         setError(errorMsg);
@@ -99,6 +111,14 @@ const AdminPanel = () => {
                 </li>
                 <li className="nav-item">
                     <button
+                        className={`nav-link ${activeTab === 'musicthemes' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('musicthemes')}
+                    >
+                        Music Themes
+                    </button>
+                </li>
+                <li className="nav-item">
+                    <button
                         className={`nav-link ${activeTab === 'relationships' ? 'active' : ''}`}
                         onClick={() => setActiveTab('relationships')}
                     >
@@ -130,6 +150,16 @@ const AdminPanel = () => {
 
             {!loading && activeTab === 'characters' && (
                 <CharacterManagement
+                    characters={characters}
+                    onDataChange={handleDataChange}
+                    onMessage={handleMessage}
+                />
+            )}
+
+            {!loading && activeTab === 'musicthemes' && (
+                <MusicThemeManagement
+                    musicThemes={musicThemes}
+                    games={games}
                     characters={characters}
                     onDataChange={handleDataChange}
                     onMessage={handleMessage}

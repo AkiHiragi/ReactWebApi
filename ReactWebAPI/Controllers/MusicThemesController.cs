@@ -23,7 +23,7 @@ public class MusicThemesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MusicThemeDto>>> GetAllMusicThemes()
     {
-        var musicThemes     = await _repository.GetAllAsync();
+        var musicThemes     = await _repository.GetAllWithDetailsAsync();
         var musicThemesDtos = _mapper.Map<IEnumerable<MusicThemeDto>>(musicThemes);
 
         return Ok(musicThemesDtos);

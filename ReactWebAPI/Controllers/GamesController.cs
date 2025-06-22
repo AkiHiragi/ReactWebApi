@@ -94,6 +94,20 @@ public class GamesController : ControllerBase
         }
     }
 
+    [HttpDelete("{gameId:int}/Characters/{characterId:int}")]
+    public async Task<IActionResult> RemoveCharacterFromGame(int gameId, int characterId)
+    {
+        try
+        {
+            await _gameRepository.RemoveCharacterFromGameAsync(gameId, characterId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
     [HttpPost("{gameId:int}/MusicThemes")]
     public async Task<ActionResult<MusicThemeDto>> AddMusicThemeToGame(int gameId, MusicThemeDto musicThemeDto)
     {

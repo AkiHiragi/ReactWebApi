@@ -25,4 +25,12 @@ public class MusicThemeRepository : Repository<MusicTheme>, IMusicThemeRepositor
                              .Include(m => m.Game)
                              .ToListAsync();
     }
+
+    public async Task<IEnumerable<MusicTheme>> GetAllWithDetailsAsync()
+    {
+        return await _context.MusicThemes
+                             .Include(m => m.Game)
+                             .Include(m => m.Character)
+                             .ToListAsync();
+    }
 }

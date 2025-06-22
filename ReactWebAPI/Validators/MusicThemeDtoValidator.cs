@@ -10,7 +10,7 @@ public class MusicThemeDtoValidator : AbstractValidator<MusicThemeDto>
         RuleFor(x => x.Title)
            .NotEmpty().WithMessage("Music theme title is required")
            .Length(1, 100).WithMessage("Title must be between 1 and 100 characters")
-           .Matches("^[a-zA-Z0-9\\s~\\-\\.,!\\(\\)]+$")
+           .Matches(@"^[a-zA-Z0-9\s~\-\.,!\(\)':&]+$")
            .WithMessage("Title can only contain letters, numbers, spaces and common punctuation");
 
         RuleFor(x => x.CharacterId)

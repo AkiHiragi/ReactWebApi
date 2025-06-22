@@ -1,5 +1,6 @@
 import {useState} from "react";
-import {addCharacterToGame} from "../../services/api";
+import {addCharacterToGame, getImageUrl, removeCharacterFromGame} from "../../services/api";
+import SearchableSelect from "../common/SearchableSelect";
 
 const RelationshipManagement = ({games, characters, gamesWithCharacters, onDataChange, onMessage}) => {
     const [loading, setLoading] = useState(false);
@@ -41,6 +42,27 @@ const RelationshipManagement = ({games, characters, gamesWithCharacters, onDataC
         }
     };
 
+    const handleRemoveCharacterFromGame = async (gameId, characterId, gameName, characterName) => {
+        if (window.confirm(`Remove "${characterName}" from "${gameName}"?`)) {
+            setLoading(true);
+            onMessage(null, null);
+
+            try {
+                await removeCharacterFromGame(gameId, characterId);
+                onMessage(null, 'Character removed from game successfully');
+                onDataChange();
+            } catch (err) {
+                if (err.response?.status === 404) {
+                    onMessage('Game or character not found', null);
+                } else {
+                    onMessage('Failed to remove character from game', null);
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
     return (
         <div className="card">
             <div className="card-header">
@@ -51,34 +73,30 @@ const RelationshipManagement = ({games, characters, gamesWithCharacters, onDataC
                 <div className="row mb-4">
                     <div className="col-md-5">
                         <label>Select Game:</label>
-                        <select
-                            className="form-control"
+                        <SearchableSelect
+                            options={games}
                             value={selectedGameId}
-                            onChange={(e) => setSelectedGameId(e.target.value)}
-                        >
-                            <option value="">Choose a game...</option>
-                            {games.map(game => (
-                                <option key={game.id} value={game.id}>
-                                    {game.title} (TH{game.gameNumber})
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSelectedGameId}
+                            placeholder="Search and select game..."
+                            displayField="title"
+                            valueField="id"
+                            imageField="imageUrl"
+                            secondaryField="gameNumber"
+                        />
                     </div>
                     <div className="col-md-5">
                         <label>Select Character:</label>
-                        <select
-                            className="form-control"
+                        <SearchableSelect
+                            options={characters}
                             value={selectedCharacterId}
-                            onChange={(e) => setSelectedCharacterId(e.target.value)}
-                        >
-                            <option value="">Choose a character...</option>
-                            {characters.map(character => (
-                                <option key={character.id} value={character.id}>
-                                    {character.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSelectedCharacterId}
+                            placeholder="Search and select character..."
+                            displayField="name"
+                            valueField="id"
+                            imageField="imageUrl"
+                        />
                     </div>
+
                     <div className="col-md-2">
                         <label>&nbsp;</label>
                         <button
@@ -90,7 +108,6 @@ const RelationshipManagement = ({games, characters, gamesWithCharacters, onDataC
                         </button>
                     </div>
                 </div>
-
                 {/* Таблица существующих связей */}
                 <h5>Current Relationships:</h5>
                 <div className="table-responsive">
@@ -105,24 +122,57 @@ const RelationshipManagement = ({games, characters, gamesWithCharacters, onDataC
                         {gamesWithCharacters.map(game => (
                             <tr key={game.id}>
                                 <td>
-                                    <strong>{game.title}</strong>
-                                    <br/>
-                                    <small className="text-muted">TH{game.gameNumber}</small>
+                                    <div className="d-flex align-items-center">
+                                        <img
+                                            src={getImageUrl(game.imageUrl)}
+                                            alt={game.title}
+                                            style={{width: '40px', height: '40px', objectFit: 'cover'}}
+                                            className="rounded me-2"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://via.placeholder.com/40x40?text=No+Image';
+                                            }}
+                                        />
+                                        <div>
+                                            <strong>{game.title}</strong>
+                                            <br/>
+                                            <small className="text-muted">TH{game.gameNumber}</small>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     {game.characters && game.characters.length > 0 ? (
                                         <div>
                                             {game.characters.map(character => (
                                                 <span key={character.id}
-                                                      className="badge bg-light text-dark border me-1 mb-1">
-                                                        {character.name}
-                                                    </span>
+                                                      className="badge bg-light text-dark border me-1 mb-1 d-inline-flex align-items-center p-2">
+                                                    <img
+                                                        src={getImageUrl(character.imageUrl)}
+                                                        alt={character.name}
+                                                        style={{width: '20px', height: '20px', objectFit: 'cover'}}
+                                                        className="rounded-circle me-2"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://via.placeholder.com/20x20?text=?';
+                                                        }}
+                                                    />
+                                                    {character.name}
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close btn-close-sm ms-2"
+                                                        style={{fontSize: '0.6em'}}
+                                                        onClick={() => handleRemoveCharacterFromGame(game.id, character.id, game.title, character.name)}
+                                                        disabled={loading}
+                                                        title={`Remove ${character.name} from ${game.title}`}
+                                                    ></button>
+                                                </span>
                                             ))}
                                         </div>
                                     ) : (
                                         <span className="text-muted">No characters</span>
                                     )}
                                 </td>
+
                             </tr>
                         ))}
                         </tbody>

@@ -46,6 +46,23 @@ public class GameRepository : Repository<Game>, IGameRepository
         }
     }
 
+    public async Task RemoveCharacterFromGameAsync(int gameId, int characterId)
+    {
+        var game = await _context.Games
+                                 .Include(g => g.Characters)
+                                 .FirstOrDefaultAsync(g => g.Id == gameId);
+
+        if (game == null)
+            throw new KeyNotFoundException("Game not found");
+
+        var character = game.Characters.FirstOrDefault(c => c.Id == characterId);
+        if (character == null)
+            throw new KeyNotFoundException("Character not found in this game");
+
+        game.Characters.Remove(character);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task AddMusicThemeToGameAsync(MusicTheme musicTheme)
     {
         await _context.MusicThemes.AddAsync(musicTheme);

@@ -109,6 +109,15 @@ export const addCharacterToGame = async (gameId, characterId) => {
     }
 }
 
+export const removeCharacterFromGame = async (gameId, characterId) => {
+    try {
+        await api.delete(`/games/${gameId}/characters/${characterId}`);
+    } catch (error) {
+        console.error('Error removing character from game:', error);
+        throw error;
+    }
+};
+
 export const getAllGamesWithCharacters = async () => {
     try {
         const response = await api.get('/games/WithCharacters');
@@ -157,5 +166,55 @@ export const uploadImage = async (file) => {
 }
 
 export const getImageUrl = (imageUrl) => `${BASE_URL}/${imageUrl}`;
+
+export const getAllMusicThemes = async () => {
+    try {
+        const response = await api.get('/musicthemes');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching music themes:', error);
+        throw error;
+    }
+};
+
+export const getMusicThemeById = async (id) => {
+    try {
+        const response = await api.get(`/musicthemes/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching music theme:', error);
+        throw error;
+    }
+};
+
+export const addMusicTheme = async (musicThemeData) => {
+    try {
+        const response = await api.post('/musicthemes', musicThemeData);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding music theme:', error);
+        throw error;
+    }
+};
+
+export const updateMusicTheme = async (id, musicThemeData) => {
+    try {
+        const response = await api.put(`/musicthemes/${id}`, musicThemeData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating music theme:', error);
+        throw error;
+    }
+};
+
+export const deleteMusicTheme = async (id) => {
+    try {
+        const response = await api.delete(`/musicthemes/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting music theme:', error);
+        throw error;
+    }
+};
 
 export default api;
