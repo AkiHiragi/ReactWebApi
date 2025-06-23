@@ -117,8 +117,11 @@ public class GamesController : ControllerBase
         var game = await _gameRepository.GetByIdAsync(gameId);
         if (game == null) return NotFound("Game not found");
 
-        var character = await _characterRepository.GetByIdAsync(musicThemeDto.CharacterId);
-        if (character == null) return NotFound("Character not found");
+        if (musicThemeDto.CharacterId.HasValue)
+        {
+            var character = await _characterRepository.GetByIdAsync(musicThemeDto.CharacterId.Value);
+            if (character == null) return NotFound("Character not found");
+        }
 
         var musicTheme = _mapper.Map<MusicTheme>(musicThemeDto);
         musicTheme.GameId = gameId;

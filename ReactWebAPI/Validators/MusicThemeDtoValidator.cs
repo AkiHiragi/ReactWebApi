@@ -10,14 +10,17 @@ public class MusicThemeDtoValidator : AbstractValidator<MusicThemeDto>
         RuleFor(x => x.Title)
            .NotEmpty().WithMessage("Music theme title is required")
            .Length(1, 100).WithMessage("Title must be between 1 and 100 characters")
-           .Matches(@"^[a-zA-Z0-9\s~\-\.,!\(\)':&]+$")
+           .Matches(@"^[a-zA-Z0-9\s~\-\.,!\(\)':&\?]+$")
            .WithMessage("Title can only contain letters, numbers, spaces and common punctuation");
 
+        // Разрешаем null или значения больше 0
         RuleFor(x => x.CharacterId)
-           .GreaterThan(0).WithMessage("Character ID must be greater than 0");
+           .Must(id => id == null || id > 0)
+           .WithMessage("Character ID must be null or greater than 0");
 
         RuleFor(x => x.GameId)
-           .GreaterThan(0).WithMessage("Game ID must be greater than 0");
+           .Must(id => id == null || id > 0)
+           .WithMessage("Game ID must be null or greater than 0");
 
         // Опциональные поля могут быть пустыми, но если заполнены - проверяем
         RuleFor(x => x.CharacterName)

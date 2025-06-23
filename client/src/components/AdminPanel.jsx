@@ -5,6 +5,7 @@ import GameManagement from "./admin/GameManagement";
 import CharacterManagement from "./admin/CharacterManagement";
 import RelationshipManagement from "./admin/RelationshipManagement";
 import MusicThemeManagement from "./admin/MusicThemeManagement";
+import MusicThemeRelationManagement from "./admin/MusicThemeRelationManagement";
 
 const AdminPanel = () => {
     const [activeTab, setActiveTab] = useState('games');
@@ -125,6 +126,14 @@ const AdminPanel = () => {
                         Relationships
                     </button>
                 </li>
+                <li className="nav-item">
+                    <button
+                        className={`nav-link ${activeTab === 'musicrelations' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('musicrelations')}
+                    >
+                        Music Relations
+                    </button>
+                </li>
             </ul>
 
             {/* Сообщения */}
@@ -171,6 +180,16 @@ const AdminPanel = () => {
                     games={games}
                     characters={characters}
                     gamesWithCharacters={gamesWithCharacters}
+                    onDataChange={handleDataChange}
+                    onMessage={handleMessage}
+                />
+            )}
+
+            {!loading && activeTab === 'musicrelations' && (
+                <MusicThemeRelationManagement
+                    games={games}
+                    characters={characters}
+                    musicThemes={musicThemes}
                     onDataChange={handleDataChange}
                     onMessage={handleMessage}
                 />
