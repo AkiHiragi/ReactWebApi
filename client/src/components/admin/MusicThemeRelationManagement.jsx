@@ -45,7 +45,7 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
 
     // Привязка существующей музыкальной темы к игре/персонажу
     const handleLinkExistingTheme = async () => {
-        if (!selectedGameId || !selectedCharacterId || !selectedMusicThemeId) return;
+        if (!selectedGameId || !selectedMusicThemeId) return;
 
         setLoading(true);
         onMessage(null, null);
@@ -56,7 +56,7 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
             await updateMusicTheme(selectedMusicThemeId, {
                 ...selectedTheme,
                 gameId: parseInt(selectedGameId),
-                characterId: parseInt(selectedCharacterId)
+                characterId: selectedCharacterId ? parseInt(selectedCharacterId) : null
             });
 
             onMessage(null, 'Music theme linked successfully');
@@ -104,7 +104,7 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
     };
 
     // Фильтруем несвязанные музыкальные темы
-    const unlinkedThemes = musicThemes.filter(theme => !theme.gameId || !theme.characterId);
+    const unlinkedThemes = musicThemes.filter(theme => !theme.gameId);
 
     return (
         <div className="card">
@@ -150,7 +150,14 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
                             <div className="col-md-3">
                                 <label>Select Character:</label>
                                 <SearchableSelect
-                                    options={availableCharacters} // Используем отфильтрованных персонажей
+                                    options={[
+                                        {
+                                            id: '',
+                                            name: 'No character (Game theme)',
+                                            imageUrl: 'Images/music-note.png'
+                                        },
+                                        ...availableCharacters
+                                    ]}
                                     value={selectedCharacterId}
                                     onChange={setSelectedCharacterId}
                                     placeholder={selectedGameId ? "Search character..." : "Select game first"}
@@ -165,7 +172,7 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
                                 <button
                                     className="btn btn-success form-control"
                                     onClick={handleLinkExistingTheme}
-                                    disabled={!selectedGameId || !selectedCharacterId || !selectedMusicThemeId || loading}
+                                    disabled={!selectedGameId || !selectedMusicThemeId || loading}
                                 >
                                     {loading ? 'Linking...' : 'Link'}
                                 </button>
@@ -197,7 +204,7 @@ const MusicThemeRelationManagement = ({games, characters, musicThemes, onDataCha
                         </thead>
                         <tbody>
                         {musicThemes
-                            .filter(theme => theme.gameId && theme.characterId)
+                            .filter(theme => theme.gameId)
                             .map(theme => (
                                 <tr key={theme.id}>
                                     <td>
